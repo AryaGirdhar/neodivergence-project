@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Neurodivergence Safe Space - Moonlight Forest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="A calming virtual reality sensory space featuring a starry night sky, moonlight forest, and interactive procedural soundscapes." />
+    <!-- Modern Soothing Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet" />
+    <!-- A-Frame VR Framework -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <style>
+        :root {
+            --bg-panel: rgba(10, 15, 30, 0.75);
+            --border-panel: rgba(255, 255, 255, 0.1);
+            --accent-primary: #58c0e3;
+            --accent-secondary: #5eead4;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-color: #030712;
+            color: var(--text-main);
+        }
+
+        /* Ambient UI HUD - Glassmorphic Panels */
+        .hud-overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            top: 20px;
+            left: 20px;
+            bottom: 20px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hud-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            pointer-events: auto;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0 0 16px 0;
+            color: var(--text-muted);
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        /* Soothing Range Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            margin: 8px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-primary);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Glassmorphic Buttons */
+        .btn {
+            background: rgba(88, 192, 227, 0.15);
+            border: 1px solid rgba(88, 192, 227, 0.3);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn:hover {
+            background: rgba(88, 192, 227, 0.3);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px rgba(88, 192, 227, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-vr {
+            background: rgba(94, 234, 212, 0.15);
+            border-color: rgba(94, 234, 212, 0.3);
+            font-size: 0.95rem;
+            padding: 12px 20px;
+        }
+
+        .btn-vr:hover {
+            background: rgba(94, 234, 212, 0.3);
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 16px rgba(94, 234, 212, 0.5);
+        }
+
+        .instructions-list {
+            margin: 0;
+            padding: 0 0 0 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .instructions-list li {
+            margin-bottom: 6px;
+        }
+
+        /* Welcome Overlay (Required for Web Audio Initialization) */
+        .welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+
+        .welcome-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-panel);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 450px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        .welcome-card h2 {
+            font-size: 1.75rem;
+            margin: 0 0 12px 0;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0 0 24px 0;
+            line-height: 1.6;
+        }
+
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Hiding VR elements for non-supported browsers or on launch */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Custom small status text for owl hoots */
+        .status-text {
+            font-size: 0.75rem;
+            color: var(--accent-secondary);
+            font-style: italic;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* WebVR entry standard layout adjustment */
+        .a-enter-vr {
+            bottom: 20px !important;
+            right: 20px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Welcome & Audio Consent Screen -->
+    <div id="welcomeScreen" class="welcome-overlay">
+        <div class="welcome-card">
+            <h2>Moonlight Forest Sanctuary</h2>
+            <p>Welcome to your safe sensory space. This immersive room features a gentle forest breeze, glowing
+                fireflies, a tranquil pond, and periodic distant owl hoots.<br><br>Please activate audio to experience
+                the procedural soundscape.</p>
+            <button id="startBtn" class="btn btn-vr">Enter Calm Space</button>
+        </div>
+    </div>
+
+    <!-- HUD Overlay for Screen Interaction -->
+    <div id="hudOverlay" class="hud-overlay fade-out">
+        <div class="hud-panel">
+            <h1>Calm Safe Space</h1>
+            <p>A relaxing sanctuary designed for sensory grounding. Connect VR controllers or look around to interact.
+            </p>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Forest Breeze</span>
+                    <span id="breezeVolVal">50%</span>
+                </div>
+                <input type="range" id="breezeVolSlider" min="0" max="100" value="50" />
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Fireplace Crackle</span>
+                    <span id="fireVolVal">50%</span>
+                </div>
+                <input type="range" id="fireVolSlider" min="0" max="100" value="50" />
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Owl Hoots</span>
+                    <span id="owlVolVal">60%</span>
+                </div>
+                <input type="range" id="owlVolSlider" min="0" max="100" value="60" />
+                <button id="hootBtn" class="btn" style="margin-top: 8px;">Trigger Owl Hoot</button>
+                <span id="hootTimerText" class="status-text">Next natural hoot: calculating...</span>
+            </div>
+        </div>
+
+        <div class="hud-panel">
+            <h1>Interactions</h1>
+            <ul class="instructions-list">
+                <li><strong>Fireflies:</strong> Click/Gaze at floating sparks to trigger calming crystal chimes.</li>
+                <li><strong>Pond:</strong> Click/Gaze at the water to ring the deep resonance singing bowl.</li>
+                <li><strong>Gaze:</strong> Center the white crosshair over objects on screens to select.</li>
+                <li><strong>VR Mode:</strong> Click below to launch standard VR for Meta Quest 3S.</li>
+            </ul>
+        </div>
+
+        <button id="vrBtn" class="btn btn-vr hud-panel">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                <path d="M21 16v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2"></path>
+                <path d="M3 11V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"></path>
+                <circle cx="7" cy="14" r="2.5"></circle>
+                <circle cx="17" cy="14" r="2.5"></circle>
+                <path d="M12 7v5"></path>
+            </svg>
+            Enter VR Experience
+        </button>
+    </div>
+
+    <!-- A-FRAME 3D VR ENVIRONMENT -->
+    <!-- We disable default VR button and UI so we can use our custom styled controllers & button -->
+    <a-scene vr-mode-ui="enabled: true" fog="type: exponential; color: #081226; density: 0.022"
+        background="color: #03060f" procedural-stars procedural-clouds procedural-forest procedural-fireflies>
+
+        <a-assets>
+            <!-- Define reusable assets and mixins -->
+            <a-mixin id="flatGlow" material="shader: flat; transparent: true"></a-mixin>
+            <img id="moonTexture" src="moon_texture.png">
+        </a-assets>
+
+        <!-- LIGHTING -->
+        <!-- Ambient night sky background tone -->
+        <a-light type="ambient" color="#1a2b4c" intensity="0.3"></a-light>
+        <!-- Brighter, cool silver-blue moonlight casting directionally -->
+        <a-light type="directional" position="20 40 -50" intensity="1.2" color="#b0cdff" castShadow="false"></a-light>
+        <!-- Warm glowing pond point-light to make center cozy -->
+        <a-light type="point" position="0 0.8 -5" intensity="0.65" distance="15" color="#58c0e3"></a-light>
+
+        <!-- MOONBEAM SHAFTS OF LIGHT (Ethereal moonbeams columns shining directly onto the pond) -->
+        <a-cylinder position="0 15 -5" radius="4.3" height="30" open-ended="true" color="#5eead4"
+            material="shader: flat; opacity: 0.04; transparent: true; side: double">
+        </a-cylinder>
+        <a-cylinder position="0 15 -5" radius="2.2" height="30" open-ended="true" color="#ffffff"
+            material="shader: flat; opacity: 0.025; transparent: true; side: double">
+        </a-cylinder>
+
+        <!-- FOREST FLOOR (GRASSY GLADE) -->
+        <a-circle radius="60" color="#020905" rotation="-90 0 0" material="roughness: 1; metalness: 0"></a-circle>
+
+        <!-- SKY DOME (Midnight Blue) -->
+        <a-sky color="#050c1e"></a-sky>
+
+        <!-- THE CELESTIAL MOON -->
+        <a-entity position="20 40 -50">
+            <!-- Moon Sphere with Texture -->
+            <a-sphere radius="5.5" material="shader: flat; src: #moonTexture; color: #ffffff"></a-sphere>
+            <!-- Moon Glow Aura (Inner) -->
+            <a-sphere radius="5.8" material="shader: flat; transparent: true; opacity: 0.18; color: #ffffff"></a-sphere>
+            <!-- Moon Glow Aura (Outer) -->
+            <a-sphere radius="6.8" material="shader: flat; transparent: true; opacity: 0.06; color: #a5f3fc"></a-sphere>
+        </a-entity>
+
+        <!-- THE CALMING WATER POND -->
+        <a-entity id="pondGroup" position="0 0.01 -5">
+            <!-- Glossy Dark Pond Plane -->
+            <a-circle id="pond" radius="4.5" color="#0c1f2e" rotation="-90 0 0" class="clickable"
+                material="roughness: 0.15; metalness: 0.1; opacity: 0.9; transparent: true">
+            </a-circle>
+            <!-- Water Ripples Spawner Component -->
+            <a-entity water-ripples></a-entity>
+
+            <!-- Styled Lily Pads (concentric segments representing sliced circles) -->
+            <!-- Pad 1 -->
+            <a-ring color="#153621" radius-inner="0" radius-outer="0.32" theta-start="0" theta-length="320"
+                rotation="-90 15 0" position="-1.5 0.02 0.8" material="roughness: 0.9"></a-ring>
+            <!-- Pad 2 -->
+            <a-ring color="#12301d" radius-inner="0" radius-outer="0.25" theta-start="20" theta-length="310"
+                rotation="-90 -45 0" position="2 0.02 -1.2" material="roughness: 0.9"></a-ring>
+            <!-- Pad 3 -->
+            <a-ring color="#163823" radius-inner="0" radius-outer="0.28" theta-start="45" theta-length="315"
+                rotation="-90 90 0" position="-0.8 0.02 -2.2" material="roughness: 0.9"></a-ring>
+            <!-- Pad 4 -->
+            <a-ring color="#112d1c" radius-inner="0" radius-outer="0.3" theta-start="10" theta-length="330"
+                rotation="-90 180 0" position="0.5 0.02 1.8" material="roughness: 0.9"></a-ring>
+        </a-entity>
+
+        <!-- COZY CABIN NEAR THE LAKE -->
+        <a-entity id="cabin" position="-7.5 0 -6.5" rotation="0 40 0">
+            <!-- Main Cabin Walls (Warm Log Wood) -->
+            <a-box position="0 1.25 0" width="3" height="2.5" depth="3.2" color="#6e473b"
+                material="roughness: 0.95; metalness: 0.05"></a-box>
+
+            <!-- Slanted Roof (Cozy Deep Red Terracotta Tiles) -->
+            <a-cone position="0 3.0 0" radius-bottom="2.5" radius-top="0.01" height="1.4" segments-radial="4"
+                rotation="0 45 0" color="#8b3a3a" material="roughness: 0.9"></a-cone>
+
+            <!-- Stone Chimney -->
+            <a-box position="0.8 2.8 -0.8" width="0.4" height="1.6" depth="0.4" color="#4b5563"
+                material="roughness: 1"></a-box>
+            <!-- Chimney Cap -->
+            <a-box position="0.8 3.65 -0.8" width="0.5" height="0.1" depth="0.5" color="#1f2937"></a-box>
+
+            <!-- Front Door -->
+            <a-box position="0 0.9 1.61" width="0.85" height="1.8" depth="0.08" color="#3f231b"
+                material="roughness: 0.9"></a-box>
+            <!-- Door Handle -->
+            <a-sphere position="0.32 0.9 1.66" radius="0.04" color="#d97706"
+                material="metalness: 0.8; roughness: 0.2"></a-sphere>
+
+            <!-- Front Glowing Cozy Window -->
+            <a-box position="0.85 1.35 1.61" width="0.65" height="0.75" depth="0.05" color="#fcd34d"
+                material="shader: flat; transparent: true; opacity: 0.95"></a-box>
+            <!-- Front Window Frame -->
+            <a-box position="0.85 1.35 1.64" width="0.68" height="0.05" depth="0.03" color="#3f231b"></a-box>
+            <a-box position="0.85 1.35 1.64" width="0.05" height="0.78" depth="0.03" color="#3f231b"></a-box>
+
+            <!-- Side Glowing Cozy Window (facing pond) -->
+            <a-box position="1.51 1.35 0" width="0.05" height="0.75" depth="0.65" color="#fcd34d"
+                material="shader: flat; transparent: true; opacity: 0.95"></a-box>
+            <!-- Side Window Frame -->
+            <a-box position="1.53 1.35 0" width="0.03" height="0.05" depth="0.68" color="#3f231b"></a-box>
+            <a-box position="1.53 1.35 0" width="0.03" height="0.78" depth="0.05" color="#3f231b"></a-box>
+
+            <!-- Warm porch light lamp -->
+            <a-entity position="-0.75 1.9 1.65">
+                <a-box width="0.15" height="0.25" depth="0.15" color="#1f2937"></a-box>
+                <!-- Glowing bulb -->
+                <a-sphere position="0 -0.15 0" radius="0.06" color="#fcd34d" material="shader: flat"></a-sphere>
+                <!-- Warm porch light source -->
+                <a-light type="point" intensity="0.3" distance="3" color="#f59e0b"></a-light>
+            </a-entity>
+
+            <!-- Cabin Porch Deck -->
+            <a-box position="0 0.05 2.1" width="3.2" height="0.1" depth="1.0" color="#4e3128"
+                material="roughness: 0.9"></a-box>
+            <!-- Porch pillars -->
+            <a-cylinder position="-1.4 0.9 2.5" radius="0.05" height="1.8" color="#4e3128"></a-cylinder>
+            <a-cylinder position="1.4 0.9 2.5" radius="0.05" height="1.8" color="#4e3128"></a-cylinder>
+        </a-entity>
+
+        <!-- COZY FIREPLACE / CAMPFIRE -->
+        <a-entity id="fireplace" position="-5.5 0.01 -4.5">
+            <!-- Stone Ring (Low-poly dodecahedrons for organic rock shape) -->
+            <a-dodecahedron position="0.6 0.08 0" radius="0.14" color="#4b5563"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="-0.6 0.08 0" radius="0.14" color="#4b5563"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="0 0.08 0.6" radius="0.14" color="#4b5563"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="0 0.08 -0.6" radius="0.14" color="#4b5563"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="0.42 0.08 0.42" radius="0.14" color="#374151"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="-0.42 0.08 0.42" radius="0.14" color="#374151"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="0.42 0.08 -0.42" radius="0.14" color="#374151"
+                material="roughness: 1"></a-dodecahedron>
+            <a-dodecahedron position="-0.42 0.08 -0.42" radius="0.14" color="#374151"
+                material="roughness: 1"></a-dodecahedron>
+
+            <!-- Crossed Firewood Logs -->
+            <a-cylinder position="0 0.08 0" rotation="20 45 45" radius="0.055" height="0.55" color="#5c4033"
+                material="roughness: 1"></a-cylinder>
+            <a-cylinder position="0 0.08 0" rotation="20 -45 -45" radius="0.055" height="0.55" color="#4e3128"
+                material="roughness: 1"></a-cylinder>
+
+            <!-- Animated Low-Poly Flames -->
+            <!-- Outer Red Flame -->
+            <a-cone position="0 0.25 0" radius-bottom="0.25" radius-top="0.01" height="0.65" color="#ef4444"
+                material="shader: flat; opacity: 0.7; transparent: true"
+                animation="property: scale; to: 1.1 1.2 1.1; dir: alternate; dur: 350; loop: true; easing: easeInOutSine"></a-cone>
+            <!-- Middle Orange Flame -->
+            <a-cone position="0 0.28 0" radius-bottom="0.18" radius-top="0.01" height="0.52" color="#f97316"
+                material="shader: flat; opacity: 0.85; transparent: true"
+                animation="property: scale; to: 0.9 1.3 0.9; dir: alternate; dur: 280; loop: true; easing: easeInOutSine"></a-cone>
+            <!-- Inner Yellow Flame Core -->
+            <a-cone position="0 0.32 0" radius-bottom="0.10" radius-top="0.01" height="0.38" color="#facc15"
+                material="shader: flat; opacity: 0.95; transparent: true"
+                animation="property: scale; to: 1.2 1.1 1.2; dir: alternate; dur: 450; loop: true; easing: easeInOutSine"></a-cone>
+
+            <!-- Warm Flickering Fire Point Light -->
+            <a-light type="point" position="0 0.45 0" color="#f97316"
+                flickering-fire="minIntensity: 1.3; maxIntensity: 2.3" distance="9" decay="1"></a-light>
+        </a-entity>
+
+        <!-- SOUND SOURCE ANCHOR FOR OWL HOOTS (3D Spatialized Audio Helper) -->
+        <a-entity id="owlAudioAnchor" position="-12 8 -18"></a-entity>
+
+        <!-- CAMERA & CONTROLLER RIG -->
+        <a-entity id="rig" position="0 0 0">
+            <!-- Camera (User Head) -->
+            <!-- Enabled keyboard movement via wasd-controls -->
+            <a-entity id="camera" camera look-controls wasd-controls="acceleration: 65; fly: false" position="0 1.6 0">
+                <!-- Gaze cursor for screen and VR without controllers -->
+                <a-cursor id="gazeCursor" color="#ffffff" opacity="0.5" radius="0.015" raycaster="objects: .clickable"
+                    animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150">
+                </a-cursor>
+            </a-entity>
+
+            <!-- VR Meta Quest 3S Left Hand Controls -->
+            <a-entity id="leftHand" laser-controls="hand: left" oculus-touch-controls="hand: left"
+                raycaster="objects: .clickable; far: 15; interval: 100" line="color: #5eead4; opacity: 0.7">
+            </a-entity>
+
+            <!-- VR Meta Quest 3S Right Hand Controls -->
+            <a-entity id="rightHand" laser-controls="hand: right" oculus-touch-controls="hand: right"
+                raycaster="objects: .clickable; far: 15; interval: 100" line="color: #5eead4; opacity: 0.7">
+            </a-entity>
+        </a-entity>
+
+    </a-scene>
+
+    <!-- CUSTOM SENSORY SCRIPTS -->
+    <script>
+        // FLICKERING FIRE LIGHT EFFECT
+        AFRAME.registerComponent('flickering-fire', {
+            schema: {
+                minIntensity: { type: 'number', default: 1.0 },
+                maxIntensity: { type: 'number', default: 2.0 }
+            },
+            tick: function (time, timeDelta) {
+                const light = this.el.getObject3D('light');
+                if (light) {
+                    // Simulates random organic fire flickering
+                    const noise = Math.sin(time * 0.02) * 0.18 + Math.cos(time * 0.009) * 0.12 + (Math.random() - 0.5) * 0.15;
+                    const base = (this.data.minIntensity + this.data.maxIntensity) / 2;
+                    const range = (this.data.maxIntensity - this.data.minIntensity) / 2;
+                    light.intensity = Math.max(0.1, base + range * noise);
+                }
+            }
+        });
+
+        // PROCEDURAL GENERATION: STARRY SKY
+        AFRAME.registerComponent('procedural-stars', {
+            init: function () {
+                const sceneEl = this.el;
+                const numStars = 1000; // Increased star density to make the sky less spooky and more magical
+
+                for (let i = 0; i < numStars; i++) {
+                    // Distribute uniformly above horizon (upper dome)
+                    const theta = Math.random() * Math.PI * 0.48;
+                    const phi = Math.random() * Math.PI * 2;
+                    const distance = 75;
+
+                    const x = distance * Math.sin(theta) * Math.cos(phi);
+                    const y = distance * Math.cos(theta);
+                    const z = distance * Math.sin(theta) * Math.sin(phi);
+
+                    const star = document.createElement('a-sphere');
+                    star.setAttribute('position', `${x} ${y} ${z}`);
+
+                    // Star sizes
+                    const radius = 0.05 + Math.random() * 0.14;
+                    star.setAttribute('radius', radius);
+
+                    // Pastel glowing star colors
+                    const opacity = 0.35 + Math.random() * 0.65;
+                    const hues = ['#e2f3ff', '#ffeec9', '#ffffff', '#ffffff', '#e0fffa', '#f5d0ff'];
+                    const color = hues[Math.floor(Math.random() * hues.length)];
+                    star.setAttribute('color', color);
+                    star.setAttribute('material', `shader: flat; opacity: ${opacity}; transparent: true`);
+
+                    // Twinkle animation (almost all stars twinkle gently)
+                    if (Math.random() > 0.1) {
+                        const dur = 2000 + Math.random() * 3000;
+                        star.setAttribute('animation', {
+                            property: 'material.opacity',
+                            from: opacity,
+                            to: opacity * 0.05,
+                            dur: dur,
+                            dir: 'alternate',
+                            loop: true,
+                            easing: 'easeInOutQuad'
+                        });
+                    }
+
+                    sceneEl.appendChild(star);
+                }
+            }
+        });
+
+        // PROCEDURAL GENERATION: DRIFTING CLOUDS
+        AFRAME.registerComponent('procedural-clouds', {
+            init: function () {
+                const sceneEl = this.el;
+                const numClouds = 8;
+                this.clouds = [];
+
+                for (let i = 0; i < numClouds; i++) {
+                    const cloudContainer = document.createElement('a-entity');
+
+                    // Distribute across the sky clearing
+                    const startX = -45 + Math.random() * 90;
+                    const y = 20 + Math.random() * 10;
+                    const z = -20 - Math.random() * 30;
+
+                    cloudContainer.setAttribute('position', `${startX} ${y} ${z}`);
+
+                    // Layered puff spheres representing cloud structures
+                    const numSpheres = 5 + Math.floor(Math.random() * 4);
+                    const baseColor = '#0b1224'; // shadow
+                    const highlightColor = '#4a5b78'; // moon reflection highlights
+
+                    for (let j = 0; j < numSpheres; j++) {
+                        const sphere = document.createElement('a-sphere');
+                        const r = 2.0 + Math.random() * 2.2;
+                        sphere.setAttribute('radius', r);
+
+                        // Offset to form irregular clouds
+                        const ox = (Math.random() * 3.5 - 1.75);
+                        const oy = (Math.random() * 1.0 - 0.5);
+                        const oz = (Math.random() * 2.5 - 1.25);
+                        sphere.setAttribute('position', `${ox} ${oy} ${oz}`);
+
+                        const isHighlight = Math.random() > 0.45;
+                        sphere.setAttribute('color', isHighlight ? highlightColor : baseColor);
+
+                        const opac = 0.2 + Math.random() * 0.3;
+                        sphere.setAttribute('material', `shader: flat; opacity: ${opac}; transparent: true`);
+                        cloudContainer.appendChild(sphere);
+                    }
+
+                    // Random speed of slow wind drift
+                    const speed = 0.002 + Math.random() * 0.004;
+                    this.clouds.push({
+                        el: cloudContainer,
+                        speed: speed,
+                        x: startX,
+                        y: y,
+                        z: z
+                    });
+
+                    sceneEl.appendChild(cloudContainer);
+                }
+            },
+            tick: function (time, timeDelta) {
+                // Smooth drift transition across screen with wrap-around
+                const dt = timeDelta || 16;
+                this.clouds.forEach(cloud => {
+                    cloud.x += cloud.speed * dt * 0.1;
+                    if (cloud.x > 55) {
+                        cloud.x = -55;
+                        cloud.z = -20 - Math.random() * 30;
+                        cloud.y = 20 + Math.random() * 10;
+                    }
+                    cloud.el.setAttribute('position', `${cloud.x} ${cloud.y} ${cloud.z}`);
+                });
+            }
+        });
+
+        // PROCEDURAL GENERATION: FOREST OF LOW-POLY TREES
+        AFRAME.registerComponent('procedural-forest', {
+            init: function () {
+                const sceneEl = this.el;
+                const numTrees = 65;
+
+                for (let i = 0; i < numTrees; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    // Keep center clear for pond and viewer (radius 7.5m to 30m)
+                    const distance = 7.5 + Math.random() * 22;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+
+                    const tree = document.createElement('a-entity');
+                    tree.setAttribute('position', `${x} 0 ${z}`);
+
+                    // Natural scale variance
+                    const scale = 0.65 + Math.random() * 0.7;
+                    tree.setAttribute('scale', `${scale} ${scale} ${scale}`);
+
+                    // Random rotation around Y axis
+                    tree.setAttribute('rotation', `0 ${Math.random() * 360} 0`);
+
+                    // Trunk (cylinder)
+                    const trunk = document.createElement('a-cylinder');
+                    trunk.setAttribute('color', '#1e140c');
+                    trunk.setAttribute('radius', '0.18');
+                    trunk.setAttribute('height', '2.2');
+                    trunk.setAttribute('position', '0 1.1 0');
+                    trunk.setAttribute('material', 'roughness: 1; metalness: 0');
+                    tree.appendChild(trunk);
+
+                    // Foliage layers (3 stacked cones)
+                    const foliageColors = ['#081e10', '#0a2313', '#05180c', '#0f2f1b'];
+                    const foilColor = foliageColors[Math.floor(Math.random() * foliageColors.length)];
+
+                    // Base foliage
+                    const foil1 = document.createElement('a-cone');
+                    foil1.setAttribute('color', foilColor);
+                    foil1.setAttribute('radius-bottom', '1.2');
+                    foil1.setAttribute('radius-top', '0.01');
+                    foil1.setAttribute('height', '1.6');
+                    foil1.setAttribute('position', '0 2.5 0');
+                    foil1.setAttribute('material', 'roughness: 1; metalness: 0');
+                    tree.appendChild(foil1);
+
+                    // Mid foliage
+                    const foil2 = document.createElement('a-cone');
+                    foil2.setAttribute('color', foilColor);
+                    foil2.setAttribute('radius-bottom', '0.95');
+                    foil2.setAttribute('radius-top', '0.01');
+                    foil2.setAttribute('height', '1.3');
+                    foil2.setAttribute('position', '0 3.4 0');
+                    foil2.setAttribute('material', 'roughness: 1; metalness: 0');
+                    tree.appendChild(foil2);
+
+                    // Top foliage
+                    const foil3 = document.createElement('a-cone');
+                    foil3.setAttribute('color', foilColor);
+                    foil3.setAttribute('radius-bottom', '0.7');
+                    foil3.setAttribute('radius-top', '0.01');
+                    foil3.setAttribute('height', '1.0');
+                    foil3.setAttribute('position', '0 4.1 0');
+                    foil3.setAttribute('material', 'roughness: 1; metalness: 0');
+                    tree.appendChild(foil3);
+
+                    sceneEl.appendChild(tree);
+                }
+            }
+        });
+
+        // PROCEDURAL GENERATION: DRIFTING FIREFLIES
+        AFRAME.registerComponent('procedural-fireflies', {
+            init: function () {
+                const sceneEl = this.el;
+                const numFireflies = 14;
+
+                for (let i = 0; i < numFireflies; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    // Hovering around the pond (pond is center 0, 0, -5; radius 4.5m)
+                    const dist = 0.5 + Math.random() * 4.0;
+                    const x = Math.cos(angle) * dist;
+                    const z = -5 + Math.sin(angle) * dist;
+                    const startY = 0.25 + Math.random() * 1.5;
+
+                    const firefly = document.createElement('a-sphere');
+                    firefly.setAttribute('position', `${x} ${startY} ${z}`);
+                    firefly.setAttribute('radius', '0.035');
+                    firefly.setAttribute('color', '#a5f3fc'); // emerald / ice-blue cyan
+                    firefly.setAttribute('class', 'clickable');
+                    firefly.setAttribute('material', 'shader: flat; opacity: 0.8; transparent: true');
+
+                    // Soft twinkle animation
+                    const twinkleSpeed = 700 + Math.random() * 800;
+                    firefly.setAttribute('animation__opacity', {
+                        property: 'material.opacity',
+                        from: 0.9,
+                        to: 0.15,
+                        dur: twinkleSpeed,
+                        dir: 'alternate',
+                        loop: true,
+                        easing: 'easeInOutSine'
+                    });
+
+                    // Drifting Y height animation
+                    const floatSpeed = 3000 + Math.random() * 2500;
+                    const driftY = startY + (Math.random() * 0.5 - 0.25);
+                    firefly.setAttribute('animation__floatY', {
+                        property: 'position',
+                        to: `${x} ${driftY} ${z}`,
+                        dur: floatSpeed,
+                        dir: 'alternate',
+                        loop: true,
+                        easing: 'easeInOutSine'
+                    });
+
+                    // Trigger sound & visual flash on click
+                    firefly.addEventListener('click', () => {
+                        if (window.sensoryAudio) {
+                            // Pentatonic scale chime frequencies (C5 to A5)
+                            const scaleFreqs = [523.25, 587.33, 659.25, 783.99, 880.00];
+                            const note = scaleFreqs[Math.floor(Math.random() * scaleFreqs.length)];
+                            window.sensoryAudio.triggerChime(note);
+
+                            // Visual flash feedback
+                            firefly.setAttribute('color', '#fdba74'); // Warm orange trigger flash
+                            setTimeout(() => {
+                                firefly.setAttribute('color', '#a5f3fc');
+                            }, 300);
+                        }
+                    });
+
+                    sceneEl.appendChild(firefly);
+                }
+            }
+        });
+
+        // WATER RIPPLES GENERATOR FOR THE POND
+        AFRAME.registerComponent('water-ripples', {
+            init: function () {
+                const el = this.el;
+                const triggerRipple = () => {
+                    const ripple = document.createElement('a-ring');
+                    ripple.setAttribute('radius-inner', '0.05');
+                    ripple.setAttribute('radius-outer', '0.07');
+                    ripple.setAttribute('color', '#58c0e3');
+                    ripple.setAttribute('rotation', '-90 0 0');
+                    ripple.setAttribute('position', '0 0.015 0');
+                    ripple.setAttribute('material', 'shader: flat; opacity: 0.35; transparent: true');
+
+                    // Smoothly expand and fade ripple over 7.5 seconds
+                    ripple.setAttribute('animation__scale', {
+                        property: 'scale',
+                        from: '1 1 1',
+                        to: '48 48 1',
+                        dur: 7500,
+                        easing: 'easeOutQuad'
+                    });
+
+                    ripple.setAttribute('animation__fade', {
+                        property: 'material.opacity',
+                        from: 0.35,
+                        to: 0,
+                        dur: 7500,
+                        easing: 'easeOutQuad'
+                    });
+
+                    el.appendChild(ripple);
+
+                    // Remove entity when animation is complete to prevent memory leaks
+                    setTimeout(() => {
+                        if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+                    }, 7500);
+                };
+
+                // Continuous calm water ripples
+                setInterval(triggerRipple, 4200);
+                triggerRipple();
+            }
+        });
+
+        // PROCEDURAL AUDIO SYNTHESIZER: WEB AUDIO API
+        class SensoryAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.windNode = null;
+                this.nextHootTimeout = null;
+                this.hootDelayRange = [16000, 28000]; // 16 to 28 seconds
+                this.hootVolume = 0.6;
+                this.breezeVolume = 0.5;
+                this.fireVolume = 0.5;
+                this.fireRumble = null;
+                this.fireGainNode = null;
+                this.fireCrackleTimeout = null;
+            }
+
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Master volume routing
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                // 1. Initialize Forest Breeze
+                this.startBreeze();
+
+                // 2. Schedule First Natural Owl Hoot
+                this.scheduleNextHoot();
+
+                // 3. Initialize Fireplace Crackle sound
+                this.startFireSound();
+            }
+
+            // Procedural Brown Noise generator representing rustling wind/breeze
+            startBreeze() {
+                const sampleRate = this.ctx.sampleRate;
+                const bufferSize = 2.5 * sampleRate;
+                const noiseBuffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+
+                let lastOut = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    // DSP: 1-pole filter to convert white noise to brown noise (attenuate high frequencies)
+                    output[i] = (lastOut + (0.022 * white)) / 1.022;
+                    lastOut = output[i];
+                    output[i] *= 3.8; // Normalize volume
+                }
+
+                const noiseSource = this.ctx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+
+                // Smooth lowpass sweep representing shifting wind
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(260, this.ctx.currentTime);
+                filter.Q.setValueAtTime(0.8, this.ctx.currentTime);
+
+                // Volume controller
+                this.breezeGainNode = this.ctx.createGain();
+                this.breezeGainNode.gain.setValueAtTime(this.breezeVolume * 0.06, this.ctx.currentTime);
+
+                // LFO to modulate filter cutoff (simulating gust peaks and troughs)
+                const filterLfo = this.ctx.createOscillator();
+                filterLfo.type = 'sine';
+                filterLfo.frequency.setValueAtTime(0.04, this.ctx.currentTime); // 25 second cycles
+
+                const filterLfoGain = this.ctx.createGain();
+                filterLfoGain.gain.setValueAtTime(80, this.ctx.currentTime); // Sweep filter frequency +/- 80Hz
+
+                filterLfo.connect(filterLfoGain);
+                filterLfoGain.connect(filter.frequency);
+
+                // LFO to modulate wind volume slightly
+                const volLfo = this.ctx.createOscillator();
+                volLfo.type = 'sine';
+                volLfo.frequency.setValueAtTime(0.03, this.ctx.currentTime);
+
+                const volLfoGain = this.ctx.createGain();
+                volLfoGain.gain.setValueAtTime(this.breezeVolume * 0.02, this.ctx.currentTime);
+
+                volLfo.connect(volLfoGain);
+                volLfoGain.connect(this.breezeGainNode.gain);
+
+                // Route Nodes
+                noiseSource.connect(filter);
+                filter.connect(this.breezeGainNode);
+                this.breezeGainNode.connect(this.masterGain);
+
+                // Start oscillators
+                noiseSource.start(0);
+                filterLfo.start(0);
+                volLfo.start(0);
+            }
+
+            setBreezeVolume(val) {
+                this.breezeVolume = val;
+                if (this.breezeGainNode && this.ctx) {
+                    this.breezeGainNode.gain.linearRampToValueAtTime(val * 0.06, this.ctx.currentTime + 0.5);
+                }
+            }
+
+            setOwlVolume(val) {
+                this.hootVolume = val;
+            }
+
+            // Procedural Fireplace sound generation
+            startFireSound() {
+                if (!this.ctx) return;
+
+                // 1. Warm low rumble (sawtooth oscillator through very low lowpass filter)
+                this.fireRumble = this.ctx.createOscillator();
+                this.fireRumble.type = 'sawtooth';
+                this.fireRumble.frequency.setValueAtTime(45, this.ctx.currentTime);
+
+                const rumbleFilter = this.ctx.createBiquadFilter();
+                rumbleFilter.type = 'lowpass';
+                rumbleFilter.frequency.setValueAtTime(75, this.ctx.currentTime);
+
+                this.fireGainNode = this.ctx.createGain();
+                this.fireGainNode.gain.setValueAtTime(this.fireVolume * 0.12, this.ctx.currentTime);
+
+                // Connect rumble
+                this.fireRumble.connect(rumbleFilter);
+                rumbleFilter.connect(this.fireGainNode);
+
+                // LFO to modulate fire volume slightly to simulate roaring wind/lapping flames
+                const rumbleLfo = this.ctx.createOscillator();
+                rumbleLfo.type = 'sine';
+                rumbleLfo.frequency.setValueAtTime(0.2, this.ctx.currentTime);
+
+                const rumbleLfoGain = this.ctx.createGain();
+                rumbleLfoGain.gain.setValueAtTime(this.fireVolume * 0.04, this.ctx.currentTime);
+
+                rumbleLfo.connect(rumbleLfoGain);
+                rumbleLfoGain.connect(this.fireGainNode.gain);
+
+                // Route Nodes
+                this.fireGainNode.connect(this.masterGain);
+
+                // Start oscillators
+                this.fireRumble.start(0);
+                rumbleLfo.start(0);
+
+                // 2. Crackling pops scheduling
+                this.scheduleCrackles();
+            }
+
+            scheduleCrackles() {
+                if (!this.ctx || !this.fireRumble) return;
+
+                // Random delay between crackles
+                const delay = 35 + Math.random() * 220;
+                this.fireCrackleTimeout = setTimeout(() => {
+                    this.playCracklePop();
+                    this.scheduleCrackles();
+                }, delay);
+            }
+
+            playCracklePop() {
+                if (!this.ctx || this.fireVolume === 0) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                // Randomize crackle type for realistic acoustic variation
+                osc.type = Math.random() > 0.4 ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(600 + Math.random() * 1800, now);
+
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1400, now);
+                filter.Q.setValueAtTime(4.0, now);
+
+                // Extremely fast, sharp envelope to simulate popping wood embers
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(Math.random() * 0.04 * this.fireVolume, now + 0.001);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01 + Math.random() * 0.02);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start(now);
+                osc.stop(now + 0.04);
+            }
+
+            setFireVolume(val) {
+                this.fireVolume = val;
+                if (this.fireGainNode && this.ctx) {
+                    this.fireGainNode.gain.linearRampToValueAtTime(val * 0.12, this.ctx.currentTime + 0.3);
+                }
+            }
+
+            // Synthesizes a natural, distant "Hoo... hoo-hoo... hooo" owl hoot pattern
+            playOwlHoot() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+
+                // Sub-method to generate individual owl calls
+                const triggerTone = (time, duration, freqStart, freqEnd, peakVolume) => {
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    const lowpass = this.ctx.createBiquadFilter();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freqStart, time);
+                    // Smooth pitch slide downward
+                    osc.frequency.exponentialRampToValueAtTime(freqEnd, time + duration);
+
+                    // Attack-Decay Volume Envelope
+                    gainNode.gain.setValueAtTime(0, time);
+                    gainNode.gain.linearRampToValueAtTime(peakVolume * this.hootVolume, time + 0.06);
+                    gainNode.gain.setValueAtTime(peakVolume * this.hootVolume, time + duration - 0.08);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+                    // Warm lowpass filter to emulate distance and atmospheric absorption
+                    lowpass.type = 'lowpass';
+                    lowpass.frequency.setValueAtTime(320, time);
+
+                    osc.connect(gainNode);
+                    gainNode.connect(lowpass);
+                    lowpass.connect(this.masterGain);
+
+                    osc.start(time);
+                    osc.stop(time + duration);
+                };
+
+                // Pattern sequence timing:
+                // Call 1: "Hoo" (long, deep, slide)
+                triggerTone(now, 0.45, 235, 230, 0.16);
+
+                // Call 2 & 3: "hoo-hoo" (short, staccato, quick)
+                triggerTone(now + 0.8, 0.18, 242, 238, 0.12);
+                triggerTone(now + 1.05, 0.18, 242, 238, 0.12);
+
+                // Call 4: "hoooo" (extended, fading slide)
+                triggerTone(now + 1.45, 0.7, 230, 215, 0.14);
+            }
+
+            scheduleNextHoot() {
+                if (this.nextHootTimeout) clearTimeout(this.nextHootTimeout);
+
+                const delay = this.hootDelayRange[0] + Math.random() * (this.hootDelayRange[1] - this.hootDelayRange[0]);
+
+                // Display time remaining on UI
+                this.updateHootTimerDisplay(Math.round(delay / 1000));
+
+                this.nextHootTimeout = setTimeout(() => {
+                    this.playOwlHoot();
+                    this.scheduleNextHoot();
+                }, delay);
+            }
+
+            updateHootTimerDisplay(seconds) {
+                const timerText = document.querySelector('#hootTimerText');
+                if (!timerText) return;
+
+                let remaining = seconds;
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+                timerText.innerText = `Next natural hoot in: ${remaining}s`;
+                this.countdownInterval = setInterval(() => {
+                    remaining--;
+                    if (remaining <= 0) {
+                        timerText.innerText = `Owl is hooting...`;
+                        clearInterval(this.countdownInterval);
+                    } else {
+                        timerText.innerText = `Next natural hoot in: ${remaining}s`;
+                    }
+                }, 1000);
+            }
+
+            // Synthesizes a high crystalline chime (bell sound) for firefly click interaction
+            triggerChime(frequency) {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+
+                // Bell resonance uses inharmonic oscillators mixed together
+                const harmonics = [1, 1.45, 1.91, 2.65];
+                harmonics.forEach((ratio, index) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(frequency * ratio, now);
+
+                    // Attack-Decay (fast strike, very long decay)
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.06 / (index + 1), now + 0.004);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(now);
+                    osc.stop(now + 1.9);
+                });
+            }
+
+            // Synthesizes a deep resonant singing bowl chime for pond click interaction
+            triggerSingingBowl() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const baseF = 110; // Low G2/A2 frequency range
+
+                // Warm, rich singing bowl timbre (lots of close harmonics)
+                const bowlHarmonics = [1, 2, 2.98, 4.02, 5.05];
+                bowlHarmonics.forEach((ratio, index) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    // Add slight detuning to represent the wobble/resonance of metal bowls
+                    const detune = Math.sin(index) * 1.5;
+                    osc.frequency.setValueAtTime(baseF * ratio + detune, now);
+
+                    // Gentle attack, massive ringing decay
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.12 / (index + 1), now + 0.08); // slow build strike
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(now);
+                    osc.stop(now + 3.6);
+                });
+            }
+
+            muteAll() {
+                if (this.masterGain && this.ctx) {
+                    const currentVal = this.masterGain.gain.value;
+                    const target = currentVal > 0 ? 0 : 0.8;
+                    this.masterGain.gain.linearRampToValueAtTime(target, this.ctx.currentTime + 0.2);
+                    return target === 0;
+                }
+                return false;
+            }
+        }
+
+        // INITIALIZE APP LOGIC & UI EVENTS
+        document.addEventListener('DOMContentLoaded', () => {
+            const sensoryAudio = new SensoryAudioEngine();
+            window.sensoryAudio = sensoryAudio;
+
+            const welcomeScreen = document.querySelector('#welcomeScreen');
+            const hudOverlay = document.querySelector('#hudOverlay');
+            const startBtn = document.querySelector('#startBtn');
+            const hootBtn = document.querySelector('#hootBtn');
+            const breezeVolSlider = document.querySelector('#breezeVolSlider');
+            const breezeVolVal = document.querySelector('#breezeVolVal');
+            const fireVolSlider = document.querySelector('#fireVolSlider');
+            const fireVolVal = document.querySelector('#fireVolVal');
+            const owlVolSlider = document.querySelector('#owlVolSlider');
+            const owlVolVal = document.querySelector('#owlVolVal');
+            const vrBtn = document.querySelector('#vrBtn');
+
+            // 1. Entering Calm Space (Audio Consent click)
+            startBtn.addEventListener('click', () => {
+                sensoryAudio.init();
+
+                // UI Transitions
+                welcomeScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    welcomeScreen.style.display = 'none';
+                    hudOverlay.classList.remove('fade-out');
+                }, 1000);
+            });
+
+            // 2. Control HUD Slider Listeners
+            breezeVolSlider.addEventListener('input', (e) => {
+                const percent = e.target.value;
+                breezeVolVal.innerText = `${percent}%`;
+                sensoryAudio.setBreezeVolume(percent / 100);
+            });
+
+            owlVolSlider.addEventListener('input', (e) => {
+                const percent = e.target.value;
+                owlVolVal.innerText = `${percent}%`;
+                sensoryAudio.setOwlVolume(percent / 100);
+            });
+
+            fireVolSlider.addEventListener('input', (e) => {
+                const percent = e.target.value;
+                fireVolVal.innerText = `${percent}%`;
+                sensoryAudio.setFireVolume(percent / 100);
+            });
+
+            // 3. User Triggered Owl Hoot
+            hootBtn.addEventListener('click', () => {
+                sensoryAudio.playOwlHoot();
+                // Reset the natural schedule timer to avoid rapid double-hoots
+                sensoryAudio.scheduleNextHoot();
+            });
+
+            // 4. Custom VR entry integration
+            vrBtn.addEventListener('click', () => {
+                const sceneEl = document.querySelector('a-scene');
+                if (sceneEl.isPlaying) {
+                    sceneEl.enterVR();
+                }
+            });
+
+            // 5. Pond singing bowl trigger on click
+            const pondEl = document.querySelector('#pond');
+            pondEl.addEventListener('click', () => {
+                sensoryAudio.triggerSingingBowl();
+            });
+
+            // 6. Gaze-Cursor optimization for VR Controllers
+            // When Meta Quest 3S controllers connect, hide the screen gaze cursor.
+            const leftHand = document.querySelector('#leftHand');
+            const rightHand = document.querySelector('#rightHand');
+            const gazeCursor = document.querySelector('#gazeCursor');
+
+            const handleControllerConnected = () => {
+                if (gazeCursor) {
+                    gazeCursor.setAttribute('visible', 'false');
+                    gazeCursor.setAttribute('raycaster', 'showLine: false; far: 0');
+                }
+                // Hide 2D HUD when entering VR mode since standard HUD overlay doesn't render in stereo VR
+                hudOverlay.classList.add('fade-out');
+            };
+
+            const handleControllerDisconnected = () => {
+                // If they put away controllers, restore gaze cursor
+                if (gazeCursor) {
+                    gazeCursor.setAttribute('visible', 'true');
+                    gazeCursor.setAttribute('raycaster', 'showLine: true; far: 15');
+                }
+            };
+
+            leftHand.addEventListener('controllerconnected', handleControllerConnected);
+            rightHand.addEventListener('controllerconnected', handleControllerConnected);
+            leftHand.addEventListener('controllerdisconnected', handleControllerDisconnected);
+            rightHand.addEventListener('controllerdisconnected', handleControllerDisconnected);
+
+            // Listen to entering/exiting VR from A-Frame default events to toggle HUD overlay visibility
+            const sceneEl = document.querySelector('a-scene');
+            sceneEl.addEventListener('enter-vr', () => {
+                hudOverlay.classList.add('fade-out');
+            });
+            sceneEl.addEventListener('exit-vr', () => {
+                hudOverlay.classList.remove('fade-out');
+            });
+        });
+    </script>
+</body>
+
+</html>
