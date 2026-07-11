@@ -245,6 +245,62 @@
             right: 20px !important;
         }
 
+        /* ─── Fullscreen toggle button ─── */
+        #fsBtn {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 20;
+            background: rgba(10, 15, 30, 0.72);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 7px 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: background 0.2s ease, transform 0.15s ease;
+            pointer-events: auto;
+        }
+        #fsBtn:hover  { background: rgba(88,192,227,0.22); transform: scale(1.05); }
+        #fsBtn:active { transform: scale(0.96); }
+        #fsBtn svg    { flex-shrink: 0; }
+
+        /* ─── Fullscreen HUD: everything gets tiny ─── */
+        body.fs-active .hud-overlay {
+            gap: 4px;
+        }
+        body.fs-active .hud-panel {
+            padding: 6px 8px;
+            border-radius: 9px;
+        }
+        body.fs-active h1 {
+            font-size: 0.65rem;
+            margin: 0 0 2px 0;
+            letter-spacing: 0;
+        }
+        body.fs-active p {
+            font-size: 0.56rem;
+            line-height: 1.2;
+            margin: 0 0 4px 0;
+        }
+        body.fs-active .control-group  { margin-bottom: 4px; }
+        body.fs-active .control-label  { font-size: 0.56rem; margin-bottom: 1px; }
+        body.fs-active input[type="range"]              { height: 4px; margin: 2px 0; }
+        body.fs-active input[type="range"]::-webkit-slider-thumb { width: 14px; height: 14px; }
+        body.fs-active .btn    { font-size: 0.58rem; padding: 4px 8px;  border-radius: 5px; gap: 4px; }
+        body.fs-active .btn-vr { font-size: 0.62rem; padding: 5px 10px; }
+        body.fs-active .btn svg { width: 14px; height: 14px; }
+        body.fs-active .instructions-list { font-size: 0.52rem; line-height: 1.25; padding-left: 9px; }
+        body.fs-active .instructions-list li { margin-bottom: 1px; }
+        body.fs-active .status-text { font-size: 0.5rem; }
+
         /* =============================================
            MOBILE RESPONSIVE — Tablet portrait (≤768px)
            ============================================= */
@@ -431,6 +487,25 @@
             Enter VR Experience
         </button>
     </div>
+
+    <!-- Fullscreen Toggle Button -->
+    <button id="fsBtn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+        <!-- expand icon (shown when NOT fullscreen) -->
+        <svg id="fsIconExpand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        <!-- compress icon (shown when IN fullscreen) -->
+        <svg id="fsIconCompress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <polyline points="4 14 10 14 10 20"></polyline>
+            <polyline points="20 10 14 10 14 4"></polyline>
+            <line x1="10" y1="14" x2="3" y2="21"></line>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+        </svg>
+        <span id="fsBtnLabel">Fullscreen</span>
+    </button>
 
     <!-- A-FRAME 3D VR ENVIRONMENT -->
     <!-- We disable default VR button and UI so we can use our custom styled controllers & button -->
@@ -1395,6 +1470,56 @@
                 hudOverlay.classList.remove('fade-out');
             });
         });
+
+        // ─── FULLSCREEN API ───
+        (function () {
+            const fsBtn         = document.getElementById('fsBtn');
+            const fsIconExpand  = document.getElementById('fsIconExpand');
+            const fsIconCompress= document.getElementById('fsIconCompress');
+            const fsBtnLabel    = document.getElementById('fsBtnLabel');
+
+            function enterFS() {
+                const el = document.documentElement;
+                const req = el.requestFullscreen || el.webkitRequestFullscreen ||
+                            el.mozRequestFullScreen || el.msRequestFullscreen;
+                if (req) req.call(el).catch(() => {});
+            }
+
+            function exitFS() {
+                const ex = document.exitFullscreen || document.webkitExitFullscreen ||
+                           document.mozCancelFullScreen || document.msExitFullscreen;
+                if (ex) ex.call(document).catch(() => {});
+            }
+
+            function isFS() {
+                return !!(document.fullscreenElement || document.webkitFullscreenElement ||
+                          document.mozFullScreenElement || document.msFullscreenElement);
+            }
+
+            function onFSChange() {
+                if (isFS()) {
+                    document.body.classList.add('fs-active');
+                    fsIconExpand.style.display  = 'none';
+                    fsIconCompress.style.display = '';
+                    fsBtnLabel.textContent = 'Exit Full';
+                } else {
+                    document.body.classList.remove('fs-active');
+                    fsIconExpand.style.display  = '';
+                    fsIconCompress.style.display = 'none';
+                    fsBtnLabel.textContent = 'Fullscreen';
+                }
+            }
+
+            fsBtn.addEventListener('click', () => {
+                isFS() ? exitFS() : enterFS();
+            });
+
+            // All vendor-prefixed fullscreen change events
+            ['fullscreenchange','webkitfullscreenchange',
+             'mozfullscreenchange','MSFullscreenChange'].forEach(ev => {
+                document.addEventListener(ev, onFSChange);
+            });
+        })();
     </script>
 </body>
 
